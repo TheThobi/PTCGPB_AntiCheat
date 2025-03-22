@@ -1259,7 +1259,7 @@ GetFriendNameWinOCR(blowupPercent := 200) {
 
 GetMenuFriendNameWinOCR(ByRef usersList, ByRef previousUser, blowupPercent := 200) {
 	global winTitle
-	ocrText := cropAndOcr(winTitle, 163, 295, 250, 30, True, True, blowupPercent) ; Don't get how positions are get with WinOCR
+	ocrText := cropAndOcr(winTitle, 163, 295, 250, 30, True, True, blowupPercent)
 	friendName := Trim(ocrText, " `t`r`n")
 	
 	;Capture name for anti cheat webhook
