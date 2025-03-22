@@ -199,20 +199,15 @@ Loop {
 				if(FindOrLoseImage(99Leftx, 110, 99Rightx, 127, , 99Path, 0, failSafeTime)) {
 					done := true
 					break
-				}else if(FindOrLoseImage(123, 110, 162, 127, , "991", 0, failSafeTime)) {
-					done := true
-					break
-				}else if(FindOrLoseImage(123, 110, 162, 127, , "992", 0, failSafeTime)) {
-					done := true
-					break
-				}else if(FindOrLoseImage(123, 110, 162, 127, , "993", 0, failSafeTime)) {
-					done := true
-					break
-				}else if(FindOrLoseImage(80, 170, 120, 195, , "player", 0, failSafeTime)) {
+				} else if(FindOrLoseImage(80, 170, 120, 195, , "player", 0, failSafeTime)) {
+					if (GPTest)
+						break
 					Sleep, %Delay%
 					adbClick(210, 210)
 					Sleep, 1000
 				} else if(FindOrLoseImage(225, 195, 250, 220, , "Pending", 0, failSafeTime)) {
+					if (GPTest)
+						break
 					adbClick(245, 210)
 				} else if(FindOrLoseImage(186, 496, 206, 518, , "Accept", 0, failSafeTime)) {
 					done := true
@@ -264,36 +259,9 @@ FindOrLoseImage(X1, Y1, X2, Y2, searchVariation := "", imageName := "DEFAULT", E
 			Y1 := 220
 			X2 := 230
 			Y2 := 260
-		} 
-		else if (imageName = "99") { ; 100% full of friend list
-			X1 := 60 ; Francais
+		}else if (imageName = 99Path) { ; 100% full of friend list
 			Y1 := 103
-			X2 := 168 ; English
 			Y2 := 118
-		} 
-		else if (imageName = "991") { ; 100% full of friend list
-			X1 := 60 ; Francais
-			Y1 := 103
-			X2 := 168 ; English
-			Y2 := 118
-		} 
-		else if (imageName = "992") { ; 100% full of friend list
-			X1 := 60 ; Francais
-			Y1 := 103
-			X2 := 168 ; English
-			Y2 := 118
-		} 
-		else if (imageName = "993") { ; 100% full of friend list
-			X1 := 60 ; Francais
-			Y1 := 103
-			X2 := 168 ; English
-			Y2 := 118
-		} 
-		else if (imageName = "player") { ; 100% bot got deleted
-			X1 := 85
-			Y1 := 168
-			X2 := 120
-			Y2 := 181
 		} 
 	}
 	;bboxAndPause(X1, Y1, X2, Y2)
@@ -754,6 +722,8 @@ ToggleTestScript()
 		triggerTestNeeded := true
 		testStartTime := A_TickCount
 		CreateStatusMessage("In GP Test Mode")
+		StartSkipTime := A_TickCount ;reset stuck timers
+		failSafe := A_TickCount
 	}
 	else {
 		GPTest := false
@@ -1165,28 +1135,15 @@ HoytdjTestScript() {
 }
 
 RemoveNonVipFriends() {
-	global GPTest, vipIdsURL
+	global GPTest, vipIdsURL, failSafe
 	failSafe := A_TickCount
 	failSafeTime := 0
+	; Get us to the Social screen. Won't be super resilient but should be more consistent for most cases.
 	Loop {
 		adbClick(143, 518)
 		if(FindOrLoseImage(120, 500, 155, 530, , "Social", 0, failSafeTime))
 			break
-		else if(FindOrLoseImage(175, 165, 255, 235, , "Hourglass3", 0)) {
-			Delay(3)
-			adbClick(146, 441) ; 146 440
-			Delay(3)
-			adbClick(146, 441)
-			Delay(3)
-			adbClick(146, 441)
-			Delay(3)
-
-			FindImageAndClick(98, 184, 151, 224, , "Hourglass1", 168, 438, 500, 5) ;stop at hourglasses tutorial 2
-			Delay(1)
-
-			adbClick(203, 436) ; 203 436
-		}
-		Sleep, 500
+		Delay(5)
 		failSafeTime := (A_TickCount - failSafe) // 1000
 		CreateStatusMessage("In failsafe for Social. " . failSafeTime "/90 seconds")
 	}
@@ -1392,7 +1349,7 @@ ParseFriendCode(ByRef friendCode) {
 	failSafe := A_TickCount
 	failSafeTime := 0
 	parseFriendCodeResult := False
-	blowUp := [200, 200, 500, 1000, 2000, 100, 250, 300, 350, 400, 450, 550, 600, 700, 800, 900]
+	blowUp := [200, 500, 1000, 2000, 100, 250, 300, 350, 400, 450, 550, 600, 700, 800, 900]
 	Loop {
 		if (StrLen(tesseractPath) < 3) {
 			friendCode := GetFriendCodeWinOCR(blowUp[A_Index])
@@ -1405,7 +1362,7 @@ ParseFriendCode(ByRef friendCode) {
 			break
 		}
 		failSafeTime := (A_TickCount - failSafe) // 1000
-		if (failSafeTime > 3) {
+		if (failSafeTime > 4) {
 			parseFriendCodeResult := False
 			break
 		}
@@ -1417,7 +1374,7 @@ ParseFriendName(ByRef friendName) {
 	failSafe := A_TickCount
 	failSafeTime := 0
 	parseFriendNameResult := False
-	blowUp := [200, 200, 500, 1000, 2000, 100, 250, 300, 350, 400, 450, 550, 600, 700, 800, 900]
+	blowUp := [200, 500, 1000, 2000, 100, 250, 300, 350, 400, 450, 550, 600, 700, 800, 900]
 	Loop {
 		if (StrLen(tesseractPath) < 3) {
 			friendName := GetFriendNameWinOCR(blowUp[A_Index])
@@ -1430,7 +1387,7 @@ ParseFriendName(ByRef friendName) {
 			break
 		}
 		failSafeTime := (A_TickCount - failSafe) // 1000
-		if (failSafeTime > 2) {
+		if (failSafeTime > 4) {
 			parseFriendNameResult := False
 			break
 		}

@@ -5,7 +5,7 @@ SetTitleMatchMode, 3
 
 githubUser := "hoytdj"
 repoName := "PTCGPB"
-localVersion := "v1.4.2"
+localVersion := "v1.4.6"
 scriptFolder := A_ScriptDir
 zipPath := A_Temp . "\update.zip"
 extractPath := A_Temp . "\update"
@@ -95,7 +95,7 @@ IniRead, vipIdsURL, Settings.ini, UserSettings, vipIdsURL, ""
 IniRead, instanceLaunchDelay, Settings.ini, UserSettings, instanceLaunchDelay, 5
 IniRead, heartBeatDelay, Settings.ini, UserSettings, heartBeatDelay, 30
 IniRead, sendAccountXml, Settings.ini, UserSettings, sendAccountXml, 0
-IniRead, tesseractPath, %A_ScriptDir%\..\Settings.ini, UserSettings, tesseractPath, C:\Program Files\Tesseract-OCR\tesseract.exe
+IniRead, tesseractPath, Settings.ini, UserSettings, tesseractPath, C:\Program Files\Tesseract-OCR\tesseract.exe
 
 ; Create a stylish GUI with custom colors and modern look
 Gui, Color, 1E1E1E, 333333 ; Dark theme background
@@ -326,6 +326,7 @@ Gui, Add, Edit, vvipIdsURL w460 x270 y465 h20 -E0x200 Background2A2A2A cWhite, %
 
 ; ========== Add-On Settings Section ==========
 Gui, Add, GroupBox, x5 y495 w740 h95 cWhite, Extra Settings
+
 if (defaultLanguage = "Scale125") {
 	defaultLang := 1
 	scaleParam := 277
@@ -333,7 +334,6 @@ if (defaultLanguage = "Scale125") {
 	defaultLang := 2
 	scaleParam := 287
 }
-
 Gui, Add, Text, x20 y518 cWhite, Scale:
 Gui, Add, DropDownList, x100 y515 w80 vdefaultLanguage gdefaultLangSetting Choose%defaultLang% Background2A2A2A cWhite, Scale125|Scale100
 
@@ -695,7 +695,7 @@ Start:
 
 
 
-				discMessage := "\n" . onlineAHK . "\n" . offlineAHK . "\n" . packStatus
+				discMessage := "\n" . onlineAHK . "\n" . offlineAHK . "\n" . packStatus . "\nVersion: " . RegExReplace(githubUser, "-.*$") . "-" . localVersion
 				discMessage .= typeMsg
 				discMessage .= selectMsg
 				if(heartBeatName)

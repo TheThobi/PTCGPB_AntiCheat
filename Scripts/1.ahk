@@ -699,6 +699,11 @@ FindOrLoseImage(X1, Y1, X2, Y2, searchVariation := "", imageName := "DEFAULT", E
 			Y1 := 220
 			X2 := 230
 			Y2 := 260
+		} else if (imageName = "Erika") { ; 100% fix for Erika avatar
+			X1 := 149
+			Y1 := 153
+			X2 := 159
+			Y2 := 162
 		}
 	}
 	;bboxAndPause(X1, Y1, X2, Y2)
@@ -815,6 +820,28 @@ FindImageAndClick(X1, Y1, X2, Y2, searchVariation := "", imageName := "DEFAULT",
 			Y1 := 130
 			X2 := 174
 			Y2 := 155
+		} else if (imageName = "ChosenTag") { ; ChangeTag GP found
+			X1 := 218
+			Y1 := 307
+			X2 := 231
+			Y2 := 312
+		} else if (imageName = "Badge") { ; ChangeTag GP found
+			X1 := 48
+			Y1 := 204
+			X2 := 72
+			Y2 := 230
+		} else if (imageName = "ChooseErika") { ; ChangeTag GP found
+			X1 := 150
+			Y1 := 286
+			X2 := 155
+			Y2 := 291
+		} else if (imageName = "ChooseEevee") { ; Change Eevee Avatar
+			X1 := 157
+			Y1 := 195
+			X2 := 162
+			Y2 := 200
+			clickx := 147
+			clicky := 207
 		}
 	}
 
@@ -852,6 +879,8 @@ FindImageAndClick(X1, Y1, X2, Y2, searchVariation := "", imageName := "DEFAULT",
 			ElapsedTime := (A_TickCount - StartSkipTime) // 1000
 			if(imageName = "Country")
 				FSTime := 90
+			else if(imageName = "Proceed") ; Decrease time for Marowak
+				FSTime := 8
 			else
 				FSTime := 45
 			if(!skip) {
@@ -1013,7 +1042,7 @@ waitadb() {
 }
 
 restartGameInstance(reason, RL := true){
-	global Delay, scriptName, adbShell, adbPath, adbPort, friended, loadedAccount, DeadCheck
+	global Delay, scriptName, adbShell, adbPath, adbPort, friended, loadedAccount, DeadCheck, openPack
 	;initializeAdbShell()
 	CreateStatusMessage("Restarting game reason: `n" reason)
 
@@ -1036,9 +1065,9 @@ restartGameInstance(reason, RL := true){
 	} else if(RL) {
 		if(menuDeleteStart()) {
 			IniWrite, 0, %A_ScriptDir%\%scriptName%.ini, UserSettings, DeadCheck
-			logMessage := "\n" . username . "\n[" . starCount . "/5][" . packs . "P] " . invalid . " God pack found in instance: " . scriptName . "\nFile name: " . accountFile . "\nGot stuck getting friend code."
+			logMessage := "\n" . username . "\n[" . starCount . "/5][" . packs . "P][" . openPack . " Booster] " . invalid . " God pack found in instance: " . scriptName . "\nFile name: " . accountFile . "\nGot stuck getting friend code."
 			LogToFile(logMessage, "GPlog.txt")
-			LogToDiscord(logMessage, screenShot, discordUserId)
+			LogToDiscord(logMessage, screenShot, discordUserId, accountFullPath, fcScreenshot)
 		}
 		LogToFile("Restarted game for instance " scriptName " Reason: " reason, "Restart.txt")
 
@@ -1316,7 +1345,7 @@ CheckPack() {
 }
 
 FoundStars(star) {
-	global scriptName, DeadCheck, ocrLanguage, injectMethod
+	global scriptName, DeadCheck, ocrLanguage, injectMethod, openPack
 	screenShot := Screenshot(star)
 	accountFile := saveAccount(star, accountFullPath)
 	friendCode := getFriendCode()
@@ -1348,7 +1377,7 @@ FoundStars(star) {
 		}
 	}
 
-	logMessage := star . " found by " . username . " (" . friendCode . ") in instance: " . scriptName . " (" . packs . " packs)\nFile name: " . accountFile . "\nBacking up to the Accounts\\SpecificCards folder and continuing..."
+	logMessage := star . " found by " . username . " (" . friendCode . ") in instance: " . scriptName . " (" . packs . " packs, " . openPack . " booster)\nFile name: " . accountFile . "\nBacking up to the Accounts\\SpecificCards folder and continuing..."
 	CreateStatusMessage(logMessage)
 	LogToFile(logMessage, "GPlog.txt")
 	LogToDiscord(logMessage, screenShot, discordUserId, accountFullPath, fcScreenshot)
@@ -1372,9 +1401,7 @@ FindBorders(prefix) {
 		,[195, 277, 250, 281]
 		,[70, 394, 125, 398]
 		,[156, 394, 211, 398]]
-		pos2 += 5
 	}
-
 	pBitmap := from_window(WinExist(winTitle))
 	; imagePath := "C:\Users\Arturo\Desktop\PTCGP\GPs\" . Clipboard . ".png"
 	; pBitmap := Gdip_CreateBitmapFromFile(imagePath)
@@ -1410,7 +1437,6 @@ FindGodPack() {
 		borderCoords := [[21, 278, 91, 280]
 			,[105, 278, 175, 280]]
 	}
-		
 
 	;	SquallTCGP 2025.03.12 - 	Just checking the packs count and setting them to 0 if it's number of packs is 3. 
 	;															This applies to any Delete Method except 5 Pack (Fast). This change is made based 
@@ -1472,7 +1498,7 @@ FindGodPack() {
 }
 
 GodPackFound(validity) {
-	global scriptName, DeadCheck, ocrLanguage, injectMethod
+	global scriptName, DeadCheck, ocrLanguage, injectMethod, openPack
 
 	if(validity = "Valid") {
 		IniWrite, 0, %A_ScriptDir%\%scriptName%.ini, UserSettings, DeadCheck
@@ -1517,7 +1543,7 @@ GodPackFound(validity) {
 		LogToFile("Failed to OCR the friend code: " . e.message, "BC.txt")
 	}
 
-	logMessage := Interjection . "\n" . username . " (" . friendCode . ")\n[" . starCount . "/5][" . packs . "P] " . invalid . " God pack found in instance: " . scriptName . "\nFile name: " . accountFile . "\nBacking up to the Accounts\\GodPacks folder and continuing..."
+	logMessage := Interjection . "\n" . username . " (" . friendCode . ")\n[" . starCount . "/5][" . packs . "P][" . openPack . " Booster] " . invalid . " God pack found in instance: " . scriptName . "\nFile name: " . accountFile . "\nBacking up to the Accounts\\GodPacks folder and continuing..."
 	LogToFile(logMessage, godPackLog)
 	;Run, http://google.com, , Hide ;Remove the ; at the start of the line and replace your url if you want to trigger a link when finding a god pack.
 
@@ -1526,7 +1552,7 @@ GodPackFound(validity) {
 		LogToDiscord(logMessage, screenShot, discordUserId, accountFullPath, fcScreenshot)
 		ChooseTag()
 	} else {
-		LogToDiscord(logMessage, screenShot)
+		LogToDiscord(logMessage, screenShot, false, accountFullPath, fcScreenshot)
 	}
 }
 
@@ -1780,12 +1806,12 @@ Screenshot(filename := "Valid") {
 	screenshotFile := screenshotsDir "\" . A_Now . "_" . winTitle . "_" . filename . "_" . packs . "_packs.png"
 	pBitmapW := from_window(WinExist(winTitle))
 	pBitmap := Gdip_CloneBitmapArea(pBitmapW, 18, 175, 240, 227)
-	Gdip_DisposeImage(pBitmapW)
-
 	;scale 100%
 	if (scaleParam = 287) {
-	pBitmap := Gdip_CloneBitmapArea(from_window(WinExist(winTitle)), 17, 168, 245, 230)
+	pBitmap := Gdip_CloneBitmapArea(pBitmapW, 17, 168, 245, 230)
 	}
+	Gdip_DisposeImage(pBitmapW)
+
 	Gdip_SaveBitmapToFile(pBitmap, screenshotFile)
 
 	Gdip_DisposeImage(pBitmap)
@@ -1824,15 +1850,15 @@ LogToDiscord(message, screenshotFile := "", ping := false, xmlFile := "", screen
 					fileIndex := 0
 					if (sendScreenshot1) {
 						fileIndex++
-						curlCommand := urlCommand . "-F ""file" . fileIndex . "=@" . screenshotFile . """ "
+						curlCommand := curlCommand . "-F ""file" . fileIndex . "=@" . screenshotFile . """ "
 					}
 					if (sendScreenshot2) {
 						fileIndex++
-						curlCommand := urlCommand . "-F ""file" . fileIndex . "=@" . screenshotFile2 . """ "
+						curlCommand := curlCommand . "-F ""file" . fileIndex . "=@" . screenshotFile2 . """ "
 					}
 					if (sendAccountXml) {
 						fileIndex++
-						curlCommand := urlCommand . "-F ""file" . fileIndex . "=@" . xmlFile . """ "
+						curlCommand := curlCommand . "-F ""file" . fileIndex . "=@" . xmlFile . """ "
 					}
 				}
 				else if (sendScreenshot1 + sendScreenshot2 + sendAccountXml == 1) {
@@ -2746,7 +2772,7 @@ SelectPack(HG := false) {
 			if(FindImageAndClick(233, 486, 272, 519, , "Skip2", 130, 430, , 2)) ;click on next until skip button appears
 				break
 			Delay(1)
-			adbClick(200, 461)
+			adbClick(200, 451)
 			failSafeTime := (A_TickCount - failSafe) // 1000
 			CreateStatusMessage("In failsafe for Skip2. " . failSafeTime "/45 seconds")
 		}
