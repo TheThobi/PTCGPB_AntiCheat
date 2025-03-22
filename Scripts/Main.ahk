@@ -48,6 +48,9 @@ IniRead, sendXML, %A_ScriptDir%\..\Settings.ini, UserSettings, sendXML, 0
 IniRead, heartBeat, %A_ScriptDir%\..\Settings.ini, UserSettings, heartBeat, 1
 if(heartBeat)
 	IniWrite, 1, %A_ScriptDir%\..\HeartBeat.ini, HeartBeat, Main
+IniRead, antiCheat, %A_ScriptDir%\..\Settings.ini, UserSettings, antiCheat, 0
+IniRead, antiCheatDelay, %A_ScriptDir%\..\Settings.ini, UserSettings, antiCheatDelay, 300
+IniRead, antiCheatWebhookURL, %A_ScriptDir%\..\Settings.ini, UserSettings, antiCheatWebhookURL, ""
 IniRead, vipIdsURL, %A_ScriptDir%\..\Settings.ini, UserSettings, vipIdsURL
 IniRead, ocrLanguage, %A_ScriptDir%\..\Settings.ini, UserSettings, ocrLanguage, en
 IniRead, clientLanguage, %A_ScriptDir%\..\Settings.ini, UserSettings, clientLanguage, en
@@ -147,6 +150,14 @@ global 99Configs := {}
 99Leftx := 99Configs[clientLanguage].leftx
 99Rightx := 99Configs[clientLanguage].rightx
 
+antiCheat_usersList := ""
+antiCheat_previousUser := ""
+antiCheat_interval := antiCheatDelay * 1000
+
+if(antiCheat){
+	SetTimer, SendAntiCheat, %antiCheat_interval%
+}
+
 Loop {
 	; hoytdj Add + 6
 	if (GPTest) {
@@ -178,7 +189,12 @@ Loop {
 			failSafe := A_TickCount
 			failSafeTime := 0
 			Loop {
+				;Capture name for anti cheat webhook
+				if(antiCheat){
+					ParseMenuFriendName(antiCheat_usersList, antiCheat_previousUser)
+				}
 				Sleep, %Delay%
+
 				clickButton := FindOrLoseImage(75, 340, 195, 530, 80, "Button", 0, failSafeTime) ;looking for ok button in case an invite is withdrawn
 				if(FindOrLoseImage(99Leftx, 110, 99Rightx, 127, , 99Path, 0, failSafeTime)) {
 					done := true
@@ -646,8 +662,11 @@ Screenshot(filename := "Valid") {
 	return screenshotFile
 }
 
-LogToDiscord(message, screenshotFile := "", ping := false, xmlFile := "") {
+LogToDiscord(message, screenshotFile := "", ping := false, xmlFile := "", overrideWebhookURL := "") {
 	global discordUserId, discordWebhookURL, sendXML
+	if (overrideWebhookURL != ""){
+		discordWebhookURL := overrideWebhookURL
+	}
 	if (discordWebhookURL != "") {
 		MaxRetries := 10
 		RetryCount := 0
@@ -1281,6 +1300,13 @@ GetFriendNameWinOCR(blowupPercent := 200) {
 	return friendName
 }
 
+GetMenuFriendNameWinOCR(blowupPercent := 200) {
+	global winTitle
+	ocrText := cropAndOcr(winTitle, 122, 483, 300, 33, True, True, blowupPercent) ; Don't get how positions are get with WinOCR
+	friendName := Trim(ocrText, " `t`r`n")
+	return friendName
+}
+
 GetFriendCodeTesseract() {
 	global scaleParam
 	if (scaleParam = 287) {
@@ -1330,6 +1356,37 @@ GetFriendNameTesseract() {
 	return ""
 }
 
+GetMenuFriendNameTesseract(ByRef usersList, ByRef previousUser) {
+	global scaleParam
+	if (scaleParam = 287) {
+		x := 87
+		y := 165
+		w := 150
+		h := 20
+	}
+	else {
+		x := 86 ;Values not verified on scale 125
+		y := 172 ;Values not verified on scale 125
+		w := 150 ;Values not verified on scale 125
+		h := 20 ;Values not verified on scale 125
+	}
+
+	if (ScreenshotRegion(x, y, w, h, capturedScreenshot, "menuFriendName")) {
+		ocrText := GetTextFromImage(capturedScreenshot)
+		friendName := Trim(ocrText, " `t`r`n")
+		;MsgBox % "OCR Text:`n" . ocrText . "`nClean Text:`n" . friendName
+
+		;Capture name for anti cheat webhook
+		if(LTrim(friendName, " ") != LTrim(previousUser, " ")) {
+			previousUser := friendName
+			usersList .= previousUser . ","
+		}
+
+		return friendName
+	}
+	return ""
+}
+
 ParseFriendCode(ByRef friendCode) {
 	global tesseractPath
 	failSafe := A_TickCount
@@ -1367,6 +1424,31 @@ ParseFriendName(ByRef friendName) {
 		}
 		else {
 			friendName := GetFriendNameTesseract()
+		}
+		if (RegExMatch(friendName, "^[a-zA-Z0-9]{5,20}$")) {
+			parseFriendNameResult := True
+			break
+		}
+		failSafeTime := (A_TickCount - failSafe) // 1000
+		if (failSafeTime > 2) {
+			parseFriendNameResult := False
+			break
+		}
+	}
+	return parseFriendNameResult
+}
+
+ParseMenuFriendName(ByRef usersList, ByRef previousUser) {
+	failSafe := A_TickCount
+	failSafeTime := 0
+	parseFriendNameResult := False
+	blowUp := [200, 200, 500, 1000, 2000, 100, 250, 300, 350, 400, 450, 550, 600, 700, 800, 900]
+	Loop {
+		if (StrLen(tesseractPath) < 3) {
+			friendName := GetMenuFriendNameWinOCR(blowUp[A_Index])
+		}
+		else {
+			friendName := GetMenuFriendNameTesseract(usersList, previousUser)
 		}
 		if (RegExMatch(friendName, "^[a-zA-Z0-9]{5,20}$")) {
 			parseFriendNameResult := True
@@ -1624,6 +1706,10 @@ GetTextFromImage(inputFilename) {
 	return ocrText
 }
 
+SendAntiCheat:
+	LogToDiscord(antiCheat_usersList, "", false, "", antiCheatWebhookURL)
+	antiCheat_usersList := ""
+Return
 
 ; DEBUG
 ; F1::
