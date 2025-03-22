@@ -1257,10 +1257,17 @@ GetFriendNameWinOCR(blowupPercent := 200) {
 	return friendName
 }
 
-GetMenuFriendNameWinOCR(blowupPercent := 200) {
+GetMenuFriendNameWinOCR(ByRef usersList, ByRef previousUser, blowupPercent := 200) {
 	global winTitle
-	ocrText := cropAndOcr(winTitle, 122, 483, 300, 33, True, True, blowupPercent) ; Don't get how positions are get with WinOCR
+	ocrText := cropAndOcr(winTitle, 163, 295, 250, 30, True, True, blowupPercent) ; Don't get how positions are get with WinOCR
 	friendName := Trim(ocrText, " `t`r`n")
+	
+	;Capture name for anti cheat webhook
+	if(LTrim(friendName, " ") != LTrim(previousUser, " ")) {
+		previousUser := friendName
+		usersList .= previousUser . ","
+	}
+
 	return friendName
 }
 
@@ -1322,10 +1329,10 @@ GetMenuFriendNameTesseract(ByRef usersList, ByRef previousUser) {
 		h := 20
 	}
 	else {
-		x := 86 ;Values not verified on scale 125
-		y := 172 ;Values not verified on scale 125
-		w := 150 ;Values not verified on scale 125
-		h := 20 ;Values not verified on scale 125
+		x := 86
+		y := 172
+		w := 150
+		h := 20
 	}
 
 	if (ScreenshotRegion(x, y, w, h, capturedScreenshot, "menuFriendName")) {
@@ -1402,7 +1409,7 @@ ParseMenuFriendName(ByRef usersList, ByRef previousUser) {
 	blowUp := [200, 200, 500, 1000, 2000, 100, 250, 300, 350, 400, 450, 550, 600, 700, 800, 900]
 	Loop {
 		if (StrLen(tesseractPath) < 3) {
-			friendName := GetMenuFriendNameWinOCR(blowUp[A_Index])
+			friendName := GetMenuFriendNameWinOCR(usersList, previousUser, blowUp[A_Index])
 		}
 		else {
 			friendName := GetMenuFriendNameTesseract(usersList, previousUser)
