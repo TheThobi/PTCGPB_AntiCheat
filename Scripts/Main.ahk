@@ -50,6 +50,9 @@ IniRead, sendXML, %A_ScriptDir%\..\Settings.ini, UserSettings, sendXML, 0
 IniRead, heartBeat, %A_ScriptDir%\..\Settings.ini, UserSettings, heartBeat, 1
 if(heartBeat)
 	IniWrite, 1, %A_ScriptDir%\..\HeartBeat.ini, HeartBeat, Main
+IniRead, antiCheat, %A_ScriptDir%\..\Settings.ini, UserSettings, antiCheat, 0
+IniRead, antiCheatDelay, %A_ScriptDir%\..\Settings.ini, UserSettings, antiCheatDelay, 300
+IniRead, antiCheatWebhookURL, %A_ScriptDir%\..\Settings.ini, UserSettings, antiCheatWebhookURL, ""
 IniRead, vipIdsURL, %A_ScriptDir%\..\Settings.ini, UserSettings, vipIdsURL
 IniRead, ocrLanguage, %A_ScriptDir%\..\Settings.ini, UserSettings, ocrLanguage, en
 IniRead, clientLanguage, %A_ScriptDir%\..\Settings.ini, UserSettings, clientLanguage, en
@@ -150,6 +153,14 @@ global 99Configs := {}
 99Leftx := 99Configs[clientLanguage].leftx
 99Rightx := 99Configs[clientLanguage].rightx
 
+antiCheat_usersList := ""
+antiCheat_previousUser := ""
+antiCheat_interval := antiCheatDelay * 1000
+
+if(antiCheat){
+	SetTimer, SendAntiCheat, %antiCheat_interval%
+}
+
 Loop {
 	; hoytdj Add + 6
 	if (GPTest) {
@@ -181,7 +192,12 @@ Loop {
 			failSafe := A_TickCount
 			failSafeTime := 0
 			Loop {
+				;Capture name for anti cheat webhook
+				if(antiCheat){
+					ParseMenuFriendName(antiCheat_usersList, antiCheat_previousUser)
+				}
 				Sleep, %Delay%
+
 				clickButton := FindOrLoseImage(75, 340, 195, 530, 80, "Button", 0, failSafeTime) ;looking for ok button in case an invite is withdrawn
 				if(FindOrLoseImage(99Leftx, 110, 99Rightx, 127, , 99Path, 0, failSafeTime)) {
 					done := true
@@ -620,8 +636,11 @@ Screenshot(filename := "Valid") {
 	return screenshotFile
 }
 
-LogToDiscord(message, screenshotFile := "", ping := false, xmlFile := "") {
+LogToDiscord(message, screenshotFile := "", ping := false, xmlFile := "", overrideWebhookURL := "") {
 	global discordUserId, discordWebhookURL, sendXML
+	if (overrideWebhookURL != ""){
+		discordWebhookURL := overrideWebhookURL
+	}
 	if (discordWebhookURL != "") {
 		MaxRetries := 10
 		RetryCount := 0
@@ -1198,6 +1217,117 @@ RemoveNonVipFriends() {
 
 ParseFriendInfo(ByRef friendCode, ByRef friendName, ByRef parseFriendCodeResult, ByRef parseFriendNameResult, includesIdsAndNames := False) {
 	; Initialize variables
+
+GetFriendCodeWinOCR(blowupPercent := 200) {
+	global winTitle
+	ocrText := cropAndOcr(winTitle, 336, 106, 188, 20, True, True, blowupPercent)
+	friendCode := RegExReplace(Trim(ocrText, " `t`r`n"), "\D")
+	return friendCode
+}
+
+GetFriendNameWinOCR(blowupPercent := 200) {
+	global winTitle
+	ocrText := cropAndOcr(winTitle, 122, 483, 300, 33, True, True, blowupPercent)
+	friendName := Trim(ocrText, " `t`r`n")
+	return friendName
+}
+
+GetMenuFriendNameWinOCR(ByRef usersList, ByRef previousUser, blowupPercent := 200) {
+	global winTitle
+	ocrText := cropAndOcr(winTitle, 163, 295, 250, 30, True, True, blowupPercent)
+	friendName := Trim(ocrText, " `t`r`n")
+	
+	;Capture name for anti cheat webhook
+	if(LTrim(friendName, " ") != LTrim(previousUser, " ")) {
+		previousUser := friendName
+		usersList .= previousUser . ","
+	}
+
+	return friendName
+}
+
+GetFriendCodeTesseract() {
+	global scaleParam
+	if (scaleParam = 287) {
+		x := 170
+		y := 63
+		w := 103
+		h := 20
+	}
+	else {
+		x := 169
+		y := 72
+		w := 100
+		h := 20
+	}
+	; Parse friendCode status from screen
+	; Expected output something like "1234-5678-1234-5678"
+	if (ScreenshotRegion(x, y, w, h, capturedScreenshot, "friendCode")) {
+		ocrText := GetTextFromImage(capturedScreenshot)
+		friendCode := RegExReplace(Trim(ocrText, " `t`r`n"), "\D")
+		;MsgBox % "OCR Text:`n" . ocrText . "`nClean Text:`n" . friendCode
+		return friendCode
+	}
+	return ""
+}
+
+GetFriendNameTesseract() {
+	global scaleParam
+	if (scaleParam = 287) {
+		x := 52
+		y := 255
+		w := 174
+		h := 28
+	}
+	else {
+		x := 51
+		y := 262
+		w := 174
+		h := 28
+	}
+
+	if (ScreenshotRegion(x, y, w, h, capturedScreenshot, "friendName")) {
+		ocrText := GetTextFromImage(capturedScreenshot)
+		friendName := Trim(ocrText, " `t`r`n")
+		;MsgBox % "OCR Text:`n" . ocrText . "`nClean Text:`n" . friendName
+		return friendName
+	}
+	return ""
+}
+
+GetMenuFriendNameTesseract(ByRef usersList, ByRef previousUser) {
+	global scaleParam
+	if (scaleParam = 287) {
+		x := 87
+		y := 165
+		w := 150
+		h := 20
+	}
+	else {
+		x := 86
+		y := 172
+		w := 150
+		h := 20
+	}
+
+	if (ScreenshotRegion(x, y, w, h, capturedScreenshot, "menuFriendName")) {
+		ocrText := GetTextFromImage(capturedScreenshot)
+		friendName := Trim(ocrText, " `t`r`n")
+		;MsgBox % "OCR Text:`n" . ocrText . "`nClean Text:`n" . friendName
+
+		;Capture name for anti cheat webhook
+		if(LTrim(friendName, " ") != LTrim(previousUser, " ")) {
+			previousUser := friendName
+			usersList .= previousUser . ","
+		}
+
+		return friendName
+	}
+	return ""
+}
+
+ParseFriendCode(ByRef friendCode) {
+	global tesseractPath
 	failSafe := A_TickCount
 	failSafeTime := 0
 	friendCode := ""
@@ -1243,6 +1373,31 @@ ParseFriendInfoLoop(screenshotFile, x, y, w, h, infoID, allowedChars, validPatte
 		}
 	}
 	return success
+}
+
+ParseMenuFriendName(ByRef usersList, ByRef previousUser) {
+	failSafe := A_TickCount
+	failSafeTime := 0
+	parseFriendNameResult := False
+	blowUp := [200, 200, 500, 1000, 2000, 100, 250, 300, 350, 400, 450, 550, 600, 700, 800, 900]
+	Loop {
+		if (StrLen(tesseractPath) < 3) {
+			friendName := GetMenuFriendNameWinOCR(usersList, previousUser, blowUp[A_Index])
+		}
+		else {
+			friendName := GetMenuFriendNameTesseract(usersList, previousUser)
+		}
+		if (RegExMatch(friendName, "^[a-zA-Z0-9]{5,20}$")) {
+			parseFriendNameResult := True
+			break
+		}
+		failSafeTime := (A_TickCount - failSafe) // 1000
+		if (failSafeTime > 2) {
+			parseFriendNameResult := False
+			break
+		}
+	}
+	return parseFriendNameResult
 }
 
 class FriendAccount {
@@ -1483,6 +1638,87 @@ DownloadFile(url, filename) {
 	}
 	return !errored
 }
+
+ScreenshotRegion(x, y, width, height, ByRef outputFilename, filename := "DEFAULT") {
+	global winTitle
+	
+	; Load bitmap from window
+	pBitmapWindow := from_window(WinExist(winTitle))
+
+	; Create new cropped bitmap
+	pBitmapRegion := Gdip_CreateBitmap(width, height)
+	gRegion := Gdip_GraphicsFromImage(pBitmapRegion)
+	Gdip_SetSmoothingMode(gRegion, 0)  ; High quality
+
+	; Draw cropped region from the original bitmap onto the new one
+	Gdip_DrawImage(gRegion, pBitmapWindow, 0, 0, width, height, x, y, width, height)
+
+	; Increase contrast and convert to grayscale using a color matrix
+	contrast := 25  ; Adjust contrast level (-100 to 100)
+	factor := (100.0 + contrast) / 100.0
+	factor := factor * factor
+
+	; Grayscale conversion with contrast applied
+	redFactor := 0.299 * factor
+	greenFactor := 0.587 * factor
+	blueFactor := 0.114 * factor
+	xFactor := 0.5 * (1 - factor)
+	colorMatrix := redFactor . "|" . redFactor . "|" . redFactor . "|0|0|" . greenFactor . "|" . greenFactor . "|" . greenFactor . "|0|0|" . blueFactor . "|" . blueFactor . "|" . blueFactor . "|0|0|0|0|0|1|0|" . xFactor . "|" . xFactor . "|" . xFactor . "|0|1"
+
+	; Apply the color matrix
+	Gdip_DrawImage(gRegion, pBitmapRegion, 0, 0, width, height, 0, 0, width, height, colorMatrix)
+
+	; Define folder and file paths
+	screenshotsDir := A_ScriptDir . "\temp"
+	if !FileExist(screenshotsDir)
+		FileCreateDir, %screenshotsDir%
+
+	; File path for saving the screenshot locally
+	screenshotFile := screenshotsDir "\" . winTitle . "_" . filename . ".png"
+
+	; Save the cropped image
+	saveResult := Gdip_SaveBitmapToFile(pBitmapRegion, screenshotFile, 100)
+	if (saveResult != 0) {
+		CreateStatusMessage("Failed to save " . filename . " screenshot.`nError code: " . saveResult)
+		saveResult := false
+	}
+	else {
+		outputFilename := screenshotFile
+		saveResult := true
+	}
+
+	; Clean up resources
+	Gdip_DeleteGraphics(gRegion)
+	Gdip_DisposeImage(pBitmapWindow)
+	Gdip_DisposeImage(pBitmapRegion)
+
+	return saveResult
+}
+
+GetTextFromImage(inputFilename) {
+	global tesseractPath
+	SplitPath, inputFilename, FileName, , , FileNameNoExt
+	; --- Call Tesseract OCR ------------------------------------------------------
+	; Tesseract is a command-line utility. It takes an input image and an output base.
+	; The OCR result is written to "FileNameNoExt.txt". Adjust parameters as desired.
+	outputBase := A_ScriptDir . "\temp\" . FileNameNoExt
+	
+	RunWait, %ComSpec% /c ""%tesseractPath%" "%inputFilename%" "%outputBase%" --oem 3 --psm 7", , Hide
+
+	outputFilename := outputBase ".txt"
+	FileRead, ocrText, %outputFilename%
+	if (ErrorLevel)
+	{
+		MsgBox, 16, Error, % "Failed to read OCR output from " . outputFilename
+	}
+
+	return ocrText
+}
+
+SendAntiCheat:
+	LogToDiscord(discordUserId . "\n" . antiCheat_usersList, "", false, "", antiCheatWebhookURL)
+	antiCheat_usersList := ""
+Return
 
 ; DEBUG
 ; F1::
