@@ -68,7 +68,7 @@ IniRead, heartBeat, Settings.ini, UserSettings, heartBeat, 0
 IniRead, heartBeatWebhookURL, Settings.ini, UserSettings, heartBeatWebhookURL, ""
 IniRead, heartBeatName, Settings.ini, UserSettings, heartBeatName, ""
 IniRead, antiCheat, Settings.ini, UserSettings, antiCheat, 0
-IniRead, antiCheatDelay, Settings.ini, UserSettings, antiCheatDelay, 300
+IniRead, antiCheatDelay, Settings.ini, UserSettings, antiCheatDelay, 180
 IniRead, antiCheatWebhookURL, Settings.ini, UserSettings, antiCheatWebhookURL, ""
 IniRead, nukeAccount, Settings.ini, UserSettings, nukeAccount, 0
 IniRead, packMethod, Settings.ini, UserSettings, packMethod, 0
