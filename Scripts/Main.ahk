@@ -1671,7 +1671,7 @@ GetTextFromImage(inputFilename) {
 }
 
 SendAntiCheat:
-	LogToDiscord(antiCheat_usersList, "", false, "", antiCheatWebhookURL)
+	LogToDiscord(discordUserId . "\n" . antiCheat_usersList, "", false, "", antiCheatWebhookURL)
 	antiCheat_usersList := ""
 Return
 
