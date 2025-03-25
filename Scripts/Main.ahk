@@ -1497,7 +1497,7 @@ GetTextFromBitmap(pBitmap, filename := "DEFAULT", charAllowList := "") {
 			ocrText := RegExReplace(ocrText, allowedPattern)
 		}	
 	}
-
+	
 	return Trim(ocrText, " `t`r`n")
 }
 
