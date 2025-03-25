@@ -1568,7 +1568,7 @@ PauseAntiCheat() {
 
 ; TestAdbForOcrScreenshot() {
 ; 	global ocrLanguage, winTitle, tesseractPath
-
+	
 ; 	; Grab screenshot via Adb
 ; 	fullScreenshotFile := GetTempDirectory() . "\" .  winTitle . "_FriendProfile.png"
 ; 	adbTakeScreenshot(fullScreenshotFile)
