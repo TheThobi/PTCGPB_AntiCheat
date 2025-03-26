@@ -640,6 +640,7 @@ Screenshot(filename := "Valid") {
 
 LogToDiscord(message, screenshotFile := "", ping := false, xmlFile := "", overrideWebhookURL := "") {
 	global discordUserId, discordWebhookURL, sendXML
+	backupDiscordWebhookURL := discordWebhookURL
 	if (overrideWebhookURL != ""){
 		discordWebhookURL := overrideWebhookURL
 	}
@@ -689,6 +690,7 @@ LogToDiscord(message, screenshotFile := "", ping := false, xmlFile := "", overri
 			sleep, 250
 		}
 	}
+	discordWebhookURL := backupDiscordWebhookURL
 }
 ; Pause Script
 PauseScript:
