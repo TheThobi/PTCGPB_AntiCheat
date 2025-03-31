@@ -1308,6 +1308,16 @@ ParseFriendInfoLoop(screenshotFile, x, y, w, h, allowedChars, validPattern, ByRe
 
 ; FriendAccount class that holds information about a friend account, including the account's code (ID) and name.
 ParseMenuFriendInfo(ByRef usersList, ByRef previousUser) {
+	; ------------------------------------------------------------------------------
+	; The function has a fail-safe mechanism to stop after 1 seconds.
+	;
+	; Parameters:
+	;   usersList (ByRef String)           - A reference to store the list of all users from last X minutes
+	;   previousUser (ByRef String)        - A reference to store the name of the last user added to prevent duplicates
+	;
+	; Returns:
+	;   (Boolean) - True if EITHER the friend code OR name were successfully parsed, false otherwise.
+	; ------------------------------------------------------------------------------
 	; Initialize variables
 	failSafe := A_TickCount
 	failSafeTime := 0

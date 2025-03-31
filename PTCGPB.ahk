@@ -321,8 +321,9 @@ if (heartBeat) {
 }
 
 ; ========== AntiCheat Settings Section ==========
-Gui, Add, GroupBox, x755 y120 w240 h155 cee3030, Anti-Cheat Settings ; Cyan
-Gui, Add, Checkbox, % (antiCheat ? "Checked" : "") " vantiCheat x770 y145 gantiCheatSettings cee3030", Anti-Cheat
+sectionColor := "cee3030" ; Red
+Gui, Add, GroupBox, x755 y130 w240 h160 %sectionColor%, Anti-Cheat Settings
+Gui, Add, Checkbox, % (antiCheat ? "Checked" : "") " vantiCheat x770 y155 gantiCheatSettings " . sectionColor, Anti-Cheat
 
 if(StrLen(antiCheatDelay) < 3)
     antiCheatDelay =
@@ -330,15 +331,15 @@ if(StrLen(antiCheatWebhookURL) < 3)
     antiCheatWebhookURL =
 
 if (antiCheat) {
-    Gui, Add, Text, vacDelay x770 y170 cee3030, Delay:
+    Gui, Add, Text, vacDelay x770 y175 %sectionColor%, Delay:
     Gui, Add, Edit, vantiCheatDelay w210 x770 y195 h20 -E0x200 Background2A2A2A cWhite, %antiCheatDelay%
-    Gui, Add, Text, vacURL x770 y220 cee3030, Webhook URL:
-    Gui, Add, Edit, vantiCheatWebhookURL w210 x770 y245 h20 -E0x200 Background2A2A2A cWhite, %antiCheatWebhookURL%
+    Gui, Add, Text, vacURL x770 y215 %sectionColor%, Webhook URL:
+    Gui, Add, Edit, vantiCheatWebhookURL w210 x770 y235 h20 -E0x200 Background2A2A2A cWhite, %antiCheatWebhookURL%
 } else {
-    Gui, Add, Text, vacDelay x770 y170 Hidden cee3030, Delay:
+    Gui, Add, Text, vacDelay x770 y175 Hidden %sectionColor%, Delay:
     Gui, Add, Edit, vantiCheatDelay w210 x770 y195 h20 Hidden -E0x200 Background2A2A2A cWhite, %antiCheatDelay%
-    Gui, Add, Text, vacURL x770 y220 Hidden cee3030, Webhook URL:
-    Gui, Add, Edit, vantiCheatWebhookURL w210 x770 y245 h20 Hidden -E0x200 Background2A2A2A cWhite, %antiCheatWebhookURL%
+    Gui, Add, Text, vacURL x770 y215 Hidden %sectionColor%, Webhook URL:
+    Gui, Add, Edit, vantiCheatWebhookURL w210 x770 y235 h20 Hidden -E0x200 Background2A2A2A cWhite, %antiCheatWebhookURL%
 }
 
 ; ========== Action Buttons ==========
