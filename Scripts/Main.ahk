@@ -1331,7 +1331,7 @@ ParseMenuFriendInfo(ByRef usersList, ByRef previousUser) {
 
 		; Parse friend identifiers
 		if (!parseMenuFriendNameResult)
-			parseMenuFriendNameResult := ParseFriendInfoLoop(fullScreenshotFile, 165, 252, 250, 28, "MenuFriendName", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", "^[a-zA-Z0-9]{5,20}$", menuFriendName)
+			parseMenuFriendNameResult := ParseFriendInfoLoop(fullScreenshotFile, 165, 252, 250, 28, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", "^[a-zA-Z0-9]{5,20}$", menuFriendName)
 		if (parseMenuFriendNameResult){
 			; Capture name for anti cheat webhook
 			if(LTrim(menuFriendName, " ") != LTrim(previousUser, " ") && menuFriendName != "player") {
