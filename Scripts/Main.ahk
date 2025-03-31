@@ -50,6 +50,9 @@ IniRead, sendXML, %A_ScriptDir%\..\Settings.ini, UserSettings, sendXML, 0
 IniRead, heartBeat, %A_ScriptDir%\..\Settings.ini, UserSettings, heartBeat, 1
 if(heartBeat)
 	IniWrite, 1, %A_ScriptDir%\..\HeartBeat.ini, HeartBeat, Main
+IniRead, antiCheat, %A_ScriptDir%\..\Settings.ini, UserSettings, antiCheat, 0
+IniRead, antiCheatDelay, %A_ScriptDir%\..\Settings.ini, UserSettings, antiCheatDelay, 180
+IniRead, antiCheatWebhookURL, %A_ScriptDir%\..\Settings.ini, UserSettings, antiCheatWebhookURL, ""
 IniRead, vipIdsURL, %A_ScriptDir%\..\Settings.ini, UserSettings, vipIdsURL
 IniRead, ocrLanguage, %A_ScriptDir%\..\Settings.ini, UserSettings, ocrLanguage, en
 IniRead, clientLanguage, %A_ScriptDir%\..\Settings.ini, UserSettings, clientLanguage, en
@@ -165,6 +168,11 @@ if (scaleParam = 287) {
 99Leftx := 99Configs[clientLanguage].leftx
 99Rightx := 99Configs[clientLanguage].rightx
 
+antiCheat_usersList := ""
+antiCheat_previousUser := ""
+antiCheat_interval := antiCheatDelay * 1000
+antiCheat_running := false
+
 Loop {
 	if (GPTest) {
 		if (triggerTestNeeded)
@@ -172,6 +180,7 @@ Loop {
 		Sleep, 1000
 		if (heartBeat && (Mod(A_Index, 60) = 0))
 			IniWrite, 1, %A_ScriptDir%\..\HeartBeat.ini, HeartBeat, Main
+		PauseAntiCheat()
 		Continue
 	}
 
@@ -195,7 +204,16 @@ Loop {
 			failSafe := A_TickCount
 			failSafeTime := 0
 			Loop {
+				;Capture name for anti cheat webhook
+				if (antiCheat){
+					if (!antiCheat_running){
+						SetTimer, SendAntiCheat, %antiCheat_interval%
+						antiCheat_running := true
+					}
+					ParseMenuFriendInfo(antiCheat_usersList, antiCheat_previousUser)
+				}
 				Sleep, %Delay%
+
 				clickButton := FindOrLoseImage(75, 340, 195, 530, 80, "Button", 0, failSafeTime) ;looking for ok button in case an invite is withdrawn
 				if(FindOrLoseImage(99Leftx, 110, 99Rightx, 127, , 99Path, 0, failSafeTime)) {
 					done := true
@@ -634,8 +652,12 @@ Screenshot(filename := "Valid") {
 	return screenshotFile
 }
 
-LogToDiscord(message, screenshotFile := "", ping := false, xmlFile := "") {
+LogToDiscord(message, screenshotFile := "", ping := false, xmlFile := "", overrideWebhookURL := "") {
 	global discordUserId, discordWebhookURL, sendXML
+	backupDiscordWebhookURL := discordWebhookURL
+	if (overrideWebhookURL != ""){
+		discordWebhookURL := overrideWebhookURL
+	}
 	if (discordWebhookURL != "") {
 		MaxRetries := 10
 		RetryCount := 0
@@ -682,6 +704,7 @@ LogToDiscord(message, screenshotFile := "", ping := false, xmlFile := "") {
 			sleep, 250
 		}
 	}
+	discordWebhookURL := backupDiscordWebhookURL
 }
 ; Pause Script
 PauseScript:
@@ -1284,6 +1307,40 @@ ParseFriendInfoLoop(screenshotFile, x, y, w, h, allowedChars, validPattern, ByRe
 }
 
 ; FriendAccount class that holds information about a friend account, including the account's code (ID) and name.
+ParseMenuFriendInfo(ByRef usersList, ByRef previousUser) {
+	; Initialize variables
+	failSafe := A_TickCount
+	failSafeTime := 0
+	menuFriendName := ""
+	parseMenuFriendNameResult := False
+
+	Loop {
+		; Grab screenshot via Adb
+		fullScreenshotFile := GetTempDirectory() . "\" .  winTitle . "_MenuFriendProfile.png"
+		adbTakeScreenshot(fullScreenshotFile)
+
+		; Parse friend identifiers
+		if (!parseMenuFriendNameResult)
+			parseMenuFriendNameResult := ParseFriendInfoLoop(fullScreenshotFile, 165, 252, 250, 28, "MenuFriendName", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", "^[a-zA-Z0-9]{5,20}$", menuFriendName)
+		if (parseMenuFriendNameResult){
+			; Capture name for anti cheat webhook
+			if(LTrim(menuFriendName, " ") != LTrim(previousUser, " ") && menuFriendName != "player") {
+				previousUser := LTrim(menuFriendName)
+				usersList .= previousUser . ","
+			}
+			break
+		}
+
+		; Break and fail if this take more than 1 seconds
+		failSafeTime := (A_TickCount - failSafe) // 1000
+		if (failSafeTime > 1)
+			break
+	}
+
+	; Return true if we were able to parse EITHER the code OR the name
+	return parseMenuFriendNameResult
+}
+
 class FriendAccount {
 	; ------------------------------------------------------------------------------
 	; Properties:
@@ -1650,4 +1707,21 @@ DownloadFile(url, filename) {
 		FileAppend, %contents%, %localPath%
 	}
 	return !errored
+}
+
+SendAntiCheat() {
+	global discordUserId, antiCheat_usersList, antiCheatWebhookURL
+
+	if(antiCheat_usersList != "")
+		LogToDiscord(discordUserId . "\n" . antiCheat_usersList, "", false, "", antiCheatWebhookURL)
+	antiCheat_usersList := ""
+}
+
+PauseAntiCheat() {
+	global antiCheat_running, antiCheat_usersList, antiCheat_previousUser
+
+	SetTimer, SendAntiCheat, Off
+	antiCheat_running := false
+	antiCheat_usersList := ""
+	antiCheat_previousUser := ""
 }

@@ -67,6 +67,9 @@ IniRead, Mains, Settings.ini, UserSettings, Mains, 1
 IniRead, heartBeat, Settings.ini, UserSettings, heartBeat, 0
 IniRead, heartBeatWebhookURL, Settings.ini, UserSettings, heartBeatWebhookURL, ""
 IniRead, heartBeatName, Settings.ini, UserSettings, heartBeatName, ""
+IniRead, antiCheat, Settings.ini, UserSettings, antiCheat, 0
+IniRead, antiCheatDelay, Settings.ini, UserSettings, antiCheatDelay, 180
+IniRead, antiCheatWebhookURL, Settings.ini, UserSettings, antiCheatWebhookURL, ""
 IniRead, nukeAccount, Settings.ini, UserSettings, nukeAccount, 0
 IniRead, packMethod, Settings.ini, UserSettings, packMethod, 0
 IniRead, CheckShiningPackOnly, Settings.ini, UserSettings, CheckShiningPackOnly, 0
@@ -317,6 +320,27 @@ if (heartBeat) {
 	Gui, Add, Edit, vheartBeatDelay w50 x660 y260 h20 Hidden -E0x200 Background2A2A2A cWhite Center, %heartBeatDelay%
 }
 
+; ========== AntiCheat Settings Section ==========
+Gui, Add, GroupBox, x755 y120 w240 h155 cee3030, Anti-Cheat Settings ; Cyan
+Gui, Add, Checkbox, % (antiCheat ? "Checked" : "") " vantiCheat x770 y145 gantiCheatSettings cee3030", Anti-Cheat
+
+if(StrLen(antiCheatDelay) < 3)
+    antiCheatDelay =
+if(StrLen(antiCheatWebhookURL) < 3)
+    antiCheatWebhookURL =
+
+if (antiCheat) {
+    Gui, Add, Text, vacDelay x770 y170 cee3030, Delay:
+    Gui, Add, Edit, vantiCheatDelay w210 x770 y195 h20 -E0x200 Background2A2A2A cWhite, %antiCheatDelay%
+    Gui, Add, Text, vacURL x770 y220 cee3030, Webhook URL:
+    Gui, Add, Edit, vantiCheatWebhookURL w210 x770 y245 h20 -E0x200 Background2A2A2A cWhite, %antiCheatWebhookURL%
+} else {
+    Gui, Add, Text, vacDelay x770 y170 Hidden cee3030, Delay:
+    Gui, Add, Edit, vantiCheatDelay w210 x770 y195 h20 Hidden -E0x200 Background2A2A2A cWhite, %antiCheatDelay%
+    Gui, Add, Text, vacURL x770 y220 Hidden cee3030, Webhook URL:
+    Gui, Add, Edit, vantiCheatWebhookURL w210 x770 y245 h20 Hidden -E0x200 Background2A2A2A cWhite, %antiCheatWebhookURL%
+}
+
 ; ========== Action Buttons ==========
 Gui, Add, Button, gOpenLink x505 y370 w77 h35, Buy Me a Coffee
 Gui, Add, Button, gCheckForUpdates x587 y370 w77 h35, Check Updates
@@ -387,6 +411,23 @@ discordSettings:
 		GuiControl, Hide, hbName
 		GuiControl, Hide, hbURL
 		GuiControl, Hide, hbDelay
+	}
+return
+
+antiCheatSettings:
+	Gui, Submit, NoHide
+
+	if (antiCheat) {
+		GuiControl, Show, antiCheatDelay
+		GuiControl, Show, antiCheatWebhookURL
+		GuiControl, Show, acDelay
+		GuiControl, Show, acURL
+	}
+	else {
+		GuiControl, Hide, antiCheatDelay
+		GuiControl, Hide, antiCheatWebhookURL
+		GuiControl, Hide, acDelay
+		GuiControl, Hide, acURL
 	}
 return
 
@@ -486,6 +527,9 @@ Start:
 	IniWrite, %heartBeat%, Settings.ini, UserSettings, heartBeat
 	IniWrite, %heartBeatWebhookURL%, Settings.ini, UserSettings, heartBeatWebhookURL
 	IniWrite, %heartBeatName%, Settings.ini, UserSettings, heartBeatName
+	IniWrite, %antiCheat%, Settings.ini, UserSettings, antiCheat
+	IniWrite, %antiCheatDelay%, Settings.ini, UserSettings, antiCheatDelay
+	IniWrite, %antiCheatWebhookURL%, Settings.ini, UserSettings, antiCheatWebhookURL
 	IniWrite, %nukeAccount%, Settings.ini, UserSettings, nukeAccount
 	IniWrite, %packMethod%, Settings.ini, UserSettings, packMethod
 	IniWrite, %CheckShiningPackOnly%, Settings.ini, UserSettings, CheckShiningPackOnly
