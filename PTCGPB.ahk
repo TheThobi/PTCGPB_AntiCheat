@@ -5,7 +5,7 @@ SetTitleMatchMode, 3
 
 githubUser := "hoytdj"
 repoName := "PTCGPB"
-localVersion := "v1.5.3"
+localVersion := "v1.5.4"
 scriptFolder := A_ScriptDir
 zipPath := A_Temp . "\update.zip"
 extractPath := A_Temp . "\update"
@@ -110,6 +110,7 @@ IniRead, minStarsA2b, Settings.ini, UserSettings, minStarsA2b, 0
 IniRead, heartBeatDelay, Settings.ini, UserSettings, heartBeatDelay, 30
 IniRead, sendAccountXml, Settings.ini, UserSettings, sendAccountXml, 0
 IniRead, tesseractPath, Settings.ini, UserSettings, tesseractPath, C:\Program Files\Tesseract-OCR\tesseract.exe
+IniRead, applyRoleFilters, Settings.ini, UserSettings, applyRoleFilters, 0
 
 ; Create a stylish GUI with custom colors and modern look
 Gui, Color, 1E1E1E, 333333 ; Dark theme background
@@ -141,7 +142,7 @@ Gui, Add, Checkbox, % (runMain ? "Checked" : "") " vrunMain gmainSettings x20 y1
 Gui, Add, Edit, % "vMains w50 x125 y148 h20 -E0x200 Background2A2A2A " . sectionColor . " Center" . (runMain ? "" : " Hidden"), %Mains%
 
 ; ========== Time Settings Section ==========
-sectionColor := "c9370DB" ; Purple
+sectionColor := "cWhite" ; "c9370DB" ; Purple
 Gui, Add, GroupBox, x5 y180 w240 h125 %sectionColor%, Time Settings
 Gui, Add, Text, x20 y205 %sectionColor%, Action Delay (ms):
 Gui, Add, Edit, vDelay w60 x145 y203 h20 -E0x200 Background2A2A2A cWhite Center, %Delay%
@@ -152,7 +153,7 @@ Gui, Add, Edit, vwaitTime w60 x145 y253 h20 -E0x200 Background2A2A2A cWhite Cent
 Gui, Add, Checkbox, % (slowMotion ? "Checked" : "") " vslowMotion x20 y280 " . sectionColor, Base Game Compatibility
 
 ; ========== System Settings Section ==========
-sectionColor := "c4169E1" ; Royal Blue
+sectionColor := "cWhite" ; "c4169E1" ; Royal Blue
 Gui, Add, GroupBox, x5 y305 w240 h210 %sectionColor%, System Settings
 Gui, Add, Text, x20 y325 %sectionColor%, Monitor:
 SysGet, MonitorCount, MonitorCount
@@ -228,7 +229,7 @@ Gui, Add, Checkbox, % (autoLaunchMonitor ? "Checked" : "") " vautoLaunchMonitor 
 ; ==============================
 
 ; ========== God Pack Settings Section ==========
-sectionColor := "c39FF14" ; Neon green
+sectionColor := "cWhite" ; "c39FF14" ; Neon green
 Gui, Add, GroupBox, x255 y0 w240 h130 %sectionColor%, God Pack Settings
 Gui, Add, Text, x270 y25 %sectionColor%, Min. 2 Stars:
 Gui, Add, Edit, vminStars w25 x350 y23 h20 -E0x200 Background2A2A2A cWhite Center, %minStars%
@@ -250,7 +251,7 @@ Gui, Add, Checkbox, % (packMethod ? "Checked" : "") " vpackMethod x280 y80 " . s
 Gui, Add, Checkbox, % (nukeAccount ? "Checked" : "") " vnukeAccount x280 y100 " . sectionColor, Menu Delete Account
 
 ; ========== Pack Selection Section ==========
-sectionColor := "cFFD700" ; Gold
+sectionColor := "cWhite" ; "cFFD700" ; Gold
 Gui, Add, GroupBox, x255 y130 w240 h115 %sectionColor%, Pack Selection
 Gui, Add, Checkbox, % (Shining ? "Checked" : "") " vShining x280 y155 " . sectionColor, Shining
 Gui, Add, Checkbox, % (Arceus ? "Checked" : "") " vArceus x280 y175 " . sectionColor, Arceus
@@ -262,7 +263,7 @@ Gui, Add, Checkbox, % (Mewtwo ? "Checked" : "") " vMewtwo x365 y195 " . sectionC
 Gui, Add, Checkbox, % (Mew ? "Checked" : "") " vMew x365 y215 " . sectionColor, Mew
 
 ; ========== Card Detection Section ==========
-sectionColor := "cFF4500" ; Orange Red
+sectionColor := "cWhite" ; "cFF4500" ; Orange Red
 Gui, Add, GroupBox, x255 y245 w240 h160 %sectionColor%, Card Detection ; Orange Red
 Gui, Add, Checkbox, % (FullArtCheck ? "Checked" : "") " vFullArtCheck x270 y270 " . sectionColor, Single Full Art
 Gui, Add, Checkbox, % (TrainerCheck ? "Checked" : "") " vTrainerCheck x385 y270 " . sectionColor, Single Trainer
@@ -282,7 +283,7 @@ Gui, Add, Checkbox, % (ImmersiveCheck ? "Checked" : "") " vImmersiveCheck x270 y
 ; ==============================
 
 ; ========== Discord Settings Section ==========
-sectionColor := "cFF69B4" ; Hot pink
+sectionColor := "cWhite" ; "cFF69B4" ; Hot pink
 Gui, Add, GroupBox, x505 y0 w240 h130 %sectionColor%, Discord Settings
 if(StrLen(discordUserID) < 3)
 	discordUserID =
@@ -295,7 +296,7 @@ Gui, Add, Edit, vdiscordWebhookURL w210 x520 y80 h20 -E0x200 Background2A2A2A cW
 Gui, Add, Checkbox, % (sendAccountXml ? "Checked" : "") " vsendAccountXml x520 y105 " . sectionColor, Send Account XML
 
 ; ========== Heartbeat Settings Section ==========
-sectionColor := "c00FFFF" ; Cyan
+sectionColor := "cWhite" ; "c00FFFF" ; Cyan
 Gui, Add, GroupBox, x505 y130 w240 h160 %sectionColor%, Heartbeat Settings
 Gui, Add, Checkbox, % (heartBeat ? "Checked" : "") " vheartBeat x520 y155 gdiscordSettings " . sectionColor, Discord Heartbeat
 
@@ -370,10 +371,14 @@ Gui, Add, Edit, vvipIdsURL w460 x270 y485 h20 -E0x200 Background2A2A2A cWhite, %
 ; ==============================
 
 ; ========== Add-On Settings Section ==========
-Gui, Add, GroupBox, x5 y515 w740 h50 cWhite, Extra Settings
+sectionColor := "cWhite"
+Gui, Add, GroupBox, x5 y515 w740 h50 %sectionColor%, Extra Settings
 
-Gui, Add, Text, x15 y535 cWhite, Tesseract Path:
+Gui, Add, Text, x15 y535 %sectionColor%, Tesseract Path:
 Gui, Add, Edit, vtesseractPath w300 x115 y534 h20 -E0x200 Background2A2A2A cWhite, %tesseractPath%
+Gui, Add, Checkbox, % (applyRoleFilters ? "Checked" : "") " vapplyRoleFilters x455 y535 " . sectionColor, Use Role-Based Filters
+
+
 
 Gui, Show, , %localVersion% PTCGPB Bot Setup [Non-Commercial 4.0 International License]
 Return
@@ -580,6 +585,7 @@ Start:
 	IniWrite, %heartBeatDelay%, Settings.ini, UserSettings, heartBeatDelay
 	IniWrite, %sendAccountXml%, Settings.ini, UserSettings, sendAccountXml
 	IniWrite, %tesseractPath%, Settings.ini, UserSettings, tesseractPath
+	IniWrite, %applyRoleFilters%, Settings.ini, UserSettings, applyRoleFilters
 	
 	; Using FriendID field to provide a URL to download ids.txt is deprecated.
 	if (inStr(FriendID, "http")) {
